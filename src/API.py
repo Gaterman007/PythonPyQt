@@ -29,6 +29,9 @@ class API:
         self.axesModel = [None,None,None]
         self.modelListDisp = None
 
+
+    def setSelectedModel(self,model):
+        self.selectedModel = model
         
     def statusFrameExec(self,*args, **kwargs):
         if len(args) > 0:

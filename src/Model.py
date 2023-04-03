@@ -22,6 +22,9 @@ class BaseModel:
         self.pointWorld = []
         self.pointIndices = []
         self.pointSize = 1.0
+        self.isOnModel = False
+        self.hitDistance = 0.0
+        
 
 
         self.modelName = kwargs.get('Name',"model_%d" % self.modelID)
@@ -156,8 +159,8 @@ class BaseModel:
             self.centerInWorld = newMatrix*self.centerInWorld
 
     def HitTest(self,ray,triangleTest = False):
-        isOnModel, distance = ray.intersectionSphere(self.centerInWorld,self.maxDiag)
-        return isOnModel, distance, False , False
+        self.isOnModel, self.hitDistance = ray.intersectionSphere(self.centerInWorld,self.maxDiag)
+        return self.isOnModel, self.hitDistance, False , False
 
     def setPosition(self,pos):
         self.pos = pos
@@ -212,6 +215,7 @@ class ModelDef2(BaseModel):
         self.EBO = None
         self.renderLenght = 0
         self.renders = []
+        self.isOnATriangle = False
 
     def createVAO(self):
         if self.VAO is None:
@@ -264,15 +268,15 @@ class ModelDef2(BaseModel):
     #       Triangles    3x   0,1,2 0,2,3 ...  0,1,2 1,2,3(2,1,3) ...   3 Vertex x Triangle
 
     def HitTest(self,ray,triangleTest = False):
-        isOnModel, distance = ray.intersectionSphere(self.centerInWorld,self.maxDiag)
-        isOnATriangle = False
+        self.isOnModel, self.hitDistance = ray.intersectionSphere(self.centerInWorld,self.maxDiag)
+        self.isOnATriangle = False
         isOnVertex = False
-        if triangleTest and isOnModel:
+        if triangleTest and self.isOnModel:
             for vertex in self.pointWorld:
                 test1,test2 = ray.intersectionSphere(vertex,0.03)
                 if test1:
                     isOnVertex = True
-            isOnATriangle = False
+            self.isOnATriangle = False
             for render in self.renders:
                 if render[0] == GL_TRIANGLES:
                     # test chaque Triangle  ray.IntersectTriangle(p1,p2,p3)
@@ -280,8 +284,8 @@ class ModelDef2(BaseModel):
                     startAt = int(render[2]/4)
                     for x in range(startAt,startAt+numberOfTriangle):
                         if ray.IntersectTriangle(self.pointWorld[self.pointIndices[x]],self.pointWorld[self.pointIndices[x+1]],self.pointWorld[self.pointIndices[x+2]]):
-                            isOnATriangle = True
-        return isOnModel, distance,isOnATriangle,isOnVertex
+                            self.isOnATriangle = True
+        return self.isOnModel, self.hitDistance,self.isOnATriangle,isOnVertex
 
     def addIndices(self,indices): # Point3D
         if type(indices) == type([]):
@@ -344,7 +348,6 @@ class ModelDef2(BaseModel):
 
 class ModelDefault(ModelDef2):
     def __init__(self,*args,**kwargs):
-        super().__init__(*args,**kwargs)
 
         self.segments = []
         self.triangles = []
@@ -365,7 +368,9 @@ class ModelDefault(ModelDef2):
         self.EBOTriangles = None
         # minx,miny,minz,maxx,maxy,maxz
         self.minmaxextent = []
-
+        self.isOnVertex = False
+        super().__init__(*args,**kwargs)
+        
     def createPointBuffer(self):
         if len(self.pointCloud) > 0:
             if self.VAOPoints is None:
@@ -565,10 +570,28 @@ class ModelDefault(ModelDef2):
             self.updateBBox(triangle3D.p3)
         self.createTriangleBuffer()
 #        print(self.minmaxextent)
+
+    def updateWorldCoord(self):
+        self.pointWorld.clear()
+        for i in self.triangles:
+            self.pointWorld.append(self.m_model * glm.vec4(i.p1.x,i.p1.y,i.p1.z,1.0))
+            self.pointWorld.append(self.m_model * glm.vec4(i.p2.x,i.p2.y,i.p2.z,1.0))
+            self.pointWorld.append(self.m_model * glm.vec4(i.p3.x,i.p3.y,i.p3.z,1.0))
         
     def printTriangle(self):
         print(self.triangles)
     
+    def HitTest(self,ray,triangleTest = False):
+        self.isOnModel, self.hitDistance = ray.intersectionSphere(self.centerInWorld,self.maxDiag)
+        self.isOnATriangle = False
+        self.isOnVertex = False
+        if triangleTest and self.isOnModel:
+            print(len(self.pointWorld))
+            for i in range(len(self.triangles)):
+                print(self.modelName," ",i)
+                if ray.IntersectTriangle(self.pointWorld[(i*3)],self.pointWorld[(i*3)+1],self.pointWorld[(i*3)+2]):
+                    self.isOnATriangle = True
+        return self.isOnModel, self.hitDistance,self.isOnATriangle,self.isOnVertex
         
     def paintGL(self):
         if self.visible:

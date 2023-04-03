@@ -61,6 +61,7 @@ class SelectTool(MouseTool):
 
     def ButtonUpEvent(self,event):
         self.mainWin.oglFrame.ButtonUp(event)
+#        self.getAPI().setSelectedModel()
 
     def MouseMoveEvent(self,event):
         camera = self.getAPI().getCamera()
@@ -75,6 +76,7 @@ class SelectTool(MouseTool):
                 if isOnModel:
                     onAModel = True
                 if isOnTriangle:
+                    print(drawModel.modelName)
                     onATriangle = True
                 if isOnVertex:
                     OnAVertex =  True
