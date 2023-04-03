@@ -12,7 +12,7 @@ class Icons:
         if cls._instance is None:
             cls._instance = cls.__new__(cls)
             # Creating action using the first constructor
-            cls._instance.StdToolbar = QtGui.QPixmap('StandardTB.png')
+            cls._instance.StdToolbar = QtGui.QPixmap('Image\\StandardTB.png')
         return cls._instance
 
     def getCursorNo(self,iconNo,rowNo = 0,HotSpotX = 6,HotSpotY = 27):

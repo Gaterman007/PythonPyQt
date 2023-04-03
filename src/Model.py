@@ -18,29 +18,38 @@ class BaseModel:
         self.maxDiag = 0.0
         self.centerInWorld = glm.vec4(0.0,0.0,0.0,1.0)
         self.minmaxextent = [0,0,0,0,0,0]
-        self.internal = False
+        self.pointCloud = []
+        self.pointWorld = []
+        self.pointIndices = []
+        self.pointSize = 1.0
+
+
         self.modelName = kwargs.get('Name',"model_%d" % self.modelID)
         self.setModelName(self.modelName)
+
         self.progName = kwargs.get('progName',None)
         self.program = ShaderProgram.programs[self.progName]
         self.uniforms = ShaderProgram.uniforms[self.progName]
         self.attributes = ShaderProgram.attributes[self.progName]
+        self.initAttribLocation()
         if 'm_proj' in self.uniforms and 'm_view' in self.uniforms and 'm_model' in self.uniforms:
             self.isMVP = True
         else:
             self.isMVP = False
+
         self.parentModel = kwargs.get('parent',None)
+
         self.pos = kwargs.get('pos',(0, 0, 0))
         self.rot = glm.vec3([glm.radians(a) for a in kwargs.get('rot',(0, 0, 0))])
         self.scale = kwargs.get('scale',(1, 1, 1))
-        self.vbo = kwargs.get('vbo',None)
+
         self.TextureID = kwargs.get('TextureID',None)
         self.blend = kwargs.get('Blend',False)
         self.renderMode = kwargs.get('mode',GL_TRIANGLES)
-        self.m_model = self.get_model_matrix()
         self.wireframe = kwargs.get('wireframe',False)
         self.visible = kwargs.get('visible',True)
-        self.initAttribLocation()
+        self.internal = kwargs.get('internal',False)
+        self.update_model_matrix()
 
     def baseInit(self):
         self.modelID = BaseModel.nextModelID
@@ -94,79 +103,26 @@ class BaseModel:
             glBlendEquation(GL_FUNC_ADD)
     
     def paintGL(self):
-        if self.program is not None:
-            ShaderProgram.inst().UseProgram(self.program)
-            try:
-                self.vbo.bind()
-                try:
-                    if self.wireframe:
-                        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE )
-                    if self.TextureID is not None:
-                        glEnable(GL_TEXTURE_2D)
-                        glActiveTexture(GL_TEXTURE0)
-                        glBindTexture(GL_TEXTURE_2D, self.TextureID)
+        pass
 
-                    if 'texture1' in self.uniforms:
-                        glUniform1i(glGetUniformLocation(self.program, "texture1"), 0)
-                    if 'tex' in self.uniforms:
-                        glUniform1i(self.tex_uloc, 0)
-
-                    if self.blend:
-                        glEnable(GL_BLEND)
-                    # activate vertex Array
-                    if 'in_position' in self.attributes:
-                        glEnableVertexAttribArray(self.position)
-                    if 'in_tex_coord' in self.attributes:
-                        glEnableVertexAttribArray(self.tex_coord)
-
-                    # set pointer to vbo
-                    if 'in_position' in self.attributes:
-                        stride = 24   # (x,y,z,w,u,v)(6)float * (4)size of float
-                        glVertexAttribPointer(self.position, 4, GL_FLOAT, False, stride, self.vbo)
-                    # start of texture 4 float * 4(size of float)
-                    if 'in_tex_coord' in self.attributes:
-                        glVertexAttribPointer(self.tex_coord, 2, GL_FLOAT, False, stride, self.vbo + 16) 
-                    if 'm_proj' in self.uniforms:
-                        glUniformMatrix4fv(self.uniforms['m_proj'], 1, GL_FALSE, glm.value_ptr(self.m_proj))
-                    if 'm_view' in self.uniforms:
-                        glUniformMatrix4fv(self.uniforms['m_view'], 1, GL_FALSE, glm.value_ptr(self.m_view))
-                    if 'm_model' in self.uniforms:
-                        glUniformMatrix4fv(self.uniforms['m_model'], 1, GL_FALSE, glm.value_ptr(self.m_model))
-
-                    # draw 
-                    glDrawArrays(GL_TRIANGLE_FAN, 0, 4)
-                    if 'in_position' in self.attributes:
-                        glDisableVertexAttribArray(self.position)
-                    if 'in_tex_coord' in self.attributes:
-                        glDisableVertexAttribArray(self.tex_coord)
-
-                    if self.wireframe:
-                        glPolygonMode( GL_FRONT_AND_BACK, GL_FILL )
-                    # unbind texture
-                    if self.blend:
-                        glDisable(GL_BLEND)
-                    if self.TextureID is not None:
-                        glBindTexture(GL_TEXTURE_2D, 0)
-                        glDisable(GL_TEXTURE_2D)
-
-                finally:
-                    self.vbo.unbind()
-            finally:
-                ShaderProgram.inst().UseProgram(0)
-
-
-    def get_model_matrix(self):
-        m_model = glm.mat4()
+    def update_model_matrix(self):
+        self.m_model = glm.mat4()
         # translate
-        m_model = glm.translate(m_model, self.pos)
+        self.m_model = glm.translate(self.m_model, self.pos)
         # rotate
-        m_model = glm.rotate(m_model, self.rot.z, glm.vec3(0, 0, 1))
-        m_model = glm.rotate(m_model, self.rot.y, glm.vec3(0, 1, 0))
-        m_model = glm.rotate(m_model, self.rot.x, glm.vec3(1, 0, 0))
+        self.m_model = glm.rotate(self.m_model, self.rot.z, glm.vec3(0, 0, 1))
+        self.m_model = glm.rotate(self.m_model, self.rot.y, glm.vec3(0, 1, 0))
+        self.m_model = glm.rotate(self.m_model, self.rot.x, glm.vec3(1, 0, 0))
         # scale
-        m_model = glm.scale(m_model, self.scale)
-        self.fixDiagonalandCenter(m_model)
-        return m_model
+        self.m_model = glm.scale(self.m_model, self.scale)
+        self.fixDiagonalandCenter(self.m_model)
+        self.updateWorldCoord()
+
+    def updateWorldCoord(self):
+        self.pointWorld.clear()
+        for point in self.pointCloud:
+            self.pointWorld.append(self.m_model * glm.vec4(point.x,point.y,point.z,1.0))
+
 
     def updateBBox(self,point):
         if len(self.minmaxextent) < 1:
@@ -184,7 +140,7 @@ class BaseModel:
                 self.minmaxextent[4] = point.y
             if self.minmaxextent[5] < point.z:
                 self.minmaxextent[5] = point.z
-            self.m_model = self.get_model_matrix()
+            self.update_model_matrix()
 
     def fixDiagonalandCenter(self,newMatrix):
             self.maxDiag = self.minmaxextent[3] - self.minmaxextent[0]
@@ -199,36 +155,34 @@ class BaseModel:
             self.centerInWorld.z = self.minmaxextent[5] + self.minmaxextent[2]
             self.centerInWorld = newMatrix*self.centerInWorld
 
-    def HitTest(self,ray,fast = True):
+    def HitTest(self,ray,triangleTest = False):
         isOnModel, distance = ray.intersectionSphere(self.centerInWorld,self.maxDiag)
-        if not fast:
-            isOnModel, distance = ray.intersectionSphere(self.centerInWorld,self.maxDiag)
-        return isOnModel, distance
+        return isOnModel, distance, False , False
 
     def setPosition(self,pos):
         self.pos = pos
-        self.m_model = self.get_model_matrix()
+        self.update_model_matrix()
 
     def getPosition(self,pos):
         return self.pos
 
     def setRotation(self,rotation):
         self.rot = glm.vec3([glm.radians(a) for a in rotation])
-        self.m_model = self.get_model_matrix()
+        self.update_model_matrix()
 
     def getRotation(self):
         return glm.vec3([round(glm.degrees(a),6) for a in self.rot])
 
     def setScale(self,scale):
         self.scale = scale
-        self.m_model = self.get_model_matrix()
+        self.update_model_matrix()
 
     def getScale(self):
         return self.scale
 
     def _setRotate(self,rotate):
         self.rot = rotate
-        self.m_model = self.get_model_matrix()
+        self.update_model_matrix()
 
     def setWireFrame(self,wireframe):
         self.wireframe = wireframe
@@ -248,20 +202,15 @@ class ModelDef2(BaseModel):
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
 
-        self.pointSize = 1.0
-        self.pointCloud = []
-        self.pointIndices = []
         self.pointColor = glm.vec4(1.0, 1.0, 1.0, 1.0)
         self.segmentColor = glm.vec4(1.0, 1.0, 1.0, 1.0)
         self.faceColor = glm.vec4(1.0, 1.0, 1.0, 1.0)
-        self.pointSize = 1.0
 
         self.drawRender = False
         self.VAO = None
         self.VBO = None
         self.EBO = None
         self.renderLenght = 0
-
         self.renders = []
 
     def createVAO(self):
@@ -307,6 +256,33 @@ class ModelDef2(BaseModel):
         self.createVAO()
 
 
+    # GL_POINTS
+    #       Points       x                                              1 Vertex x Point
+    # GL_LINES,GL_LINE_STRIP,GL_LINE_LOOP                   
+    #       Lines        2x   0,1 1,2...  0,1 1,2... x,0                2 Vertex x Line
+    # GL_TRIANGLES,GL_TRIANGLE_FAN,GL_TRIANGLE_STRIP        
+    #       Triangles    3x   0,1,2 0,2,3 ...  0,1,2 1,2,3(2,1,3) ...   3 Vertex x Triangle
+
+    def HitTest(self,ray,triangleTest = False):
+        isOnModel, distance = ray.intersectionSphere(self.centerInWorld,self.maxDiag)
+        isOnATriangle = False
+        isOnVertex = False
+        if triangleTest and isOnModel:
+            for vertex in self.pointWorld:
+                test1,test2 = ray.intersectionSphere(vertex,0.03)
+                if test1:
+                    isOnVertex = True
+            isOnATriangle = False
+            for render in self.renders:
+                if render[0] == GL_TRIANGLES:
+                    # test chaque Triangle  ray.IntersectTriangle(p1,p2,p3)
+                    numberOfTriangle = int(render[1]/3)
+                    startAt = int(render[2]/4)
+                    for x in range(startAt,startAt+numberOfTriangle):
+                        if ray.IntersectTriangle(self.pointWorld[self.pointIndices[x]],self.pointWorld[self.pointIndices[x+1]],self.pointWorld[self.pointIndices[x+2]]):
+                            isOnATriangle = True
+        return isOnModel, distance,isOnATriangle,isOnVertex
+
     def addIndices(self,indices): # Point3D
         if type(indices) == type([]):
             self.pointIndices.extend(indices) # add many points
@@ -314,6 +290,8 @@ class ModelDef2(BaseModel):
             self.pointIndices.append(indices) # add one point
         self.createVAO()
 
+    def addRender(self,modes,size,start,color):
+        self.renders.append((modes,size,start,color))
 
     def paintGL(self):
 #        self._paintGL((self.renderMode,self.renderLenght,0))
@@ -347,7 +325,7 @@ class ModelDef2(BaseModel):
                         glUniformMatrix4fv(self.uniforms['m_model'], 1, GL_FALSE, glm.value_ptr(self.m_model))
                         
                     if 'color' in self.uniforms:
-                        glUniform4f(self.uniforms['color'], self.pointColor[0], self.pointColor[1], self.pointColor[2], self.pointColor[3])
+                        glUniform4f(self.uniforms['color'], render[3][0], render[3][1], render[3][2], render[3][3])
                     if self.pointSize > 1.0:
                         glPointSize(self.pointSize)
                     glDrawElements(render[0], render[1], GL_UNSIGNED_INT, ctypes.c_void_p(render[2]))

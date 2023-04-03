@@ -15,7 +15,7 @@ class EngineWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("3D Editor")                                # set window title
-        self.setWindowIcon(QtGui.QIcon('3dGlobe.png'))                  # set icon for program
+        self.setWindowIcon(QtGui.QIcon('Image\\3dGlobe.png'))                  # set icon for program
         mainDir = os.path.dirname(__file__)                             # get program directory
         self.mainParentdir = os.path.join(mainDir, os.pardir)           # get path of parent directory
         self.mainParentdir = os.path.realpath(self.mainParentdir)       # get real path eliminating any symbolic links

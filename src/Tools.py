@@ -26,7 +26,6 @@ class MouseTool:
     def defaultCursor(self):
         self.CURSOR_Arrow = QtGui.QCursor(Qt.ArrowCursor)
         self.mainWin.oglFrame.setCursor(self.CURSOR_Arrow)
-#        self.CURSOR_Pencil = QtGui.QCursor(QtGui.QPixmap('pencil.png'), 6, 27)
 #        self.CURSOR_Arrow = QtGui.QCursor(Qt.ArrowCursor)
 #        self.CURSOR_PointingHandCursor = QtGui.QCursor(Qt.PointingHandCursor)
 #        self.mainWin.oglFrame.setCursor(self.CURSOR_Arrow)
@@ -68,18 +67,26 @@ class SelectTool(MouseTool):
         self.getOGl().hudTexture.clear()
         ray = camera.get_Ray((event.x(),event.y()))
         onAModel = False
+        onATriangle = False
+        OnAVertex =  False
         for drawModel in self.getOGl().drawModelList:
             if not drawModel.internal:
-#                print(drawModel.modelName)
-#                print(drawModel.maxDiag,drawModel.centerInWorld)
-                isOnModel, distance = drawModel.HitTest(ray)
+                isOnModel, distance,isOnTriangle,isOnVertex = drawModel.HitTest(ray,triangleTest = True)
                 if isOnModel:
                     onAModel = True
-#                print(isOnModel)
+                if isOnTriangle:
+                    onATriangle = True
+                if isOnVertex:
+                    OnAVertex =  True
 
-        visualIndicator = (255,0,0,255)
         if onAModel:
-            visualIndicator = (255,255,0,255)
+            if onATriangle:
+                visualIndicator = (255,255,0,255)
+            else:
+                visualIndicator = (255,0,0,255)
+            if OnAVertex:
+                visualIndicator = (0,0,255,255)
+            
             self.getOGl().hudTexture.drawCircle(event.x(),event.y(),15,color = visualIndicator)
 
         self.mainWin.oglFrame.MouseMove(event)
@@ -99,7 +106,7 @@ class LineTool(MouseTool):
         self.MouseButtonDown = False
 
     def defaultCursor(self):
-        self.CURSOR_Pencil = QtGui.QCursor(QtGui.QPixmap('pencil.png'), 6, 27)
+        self.CURSOR_Pencil = QtGui.QCursor(QtGui.QPixmap('Image\\pencil.png'), 6, 27)
         self.getOGl().setCursor(self.CURSOR_Pencil)
 
     def ButtonDownEvent(self,event):
@@ -139,7 +146,6 @@ class RegtangleTool(MouseTool):
 
     def defaultCursor(self):
         self.CURSOR_Pencil = Icons.inst().getCursorNo(13,rowNo = 0,HotSpotX = 6,HotSpotY = 27)
-#        self.CURSOR_Pencil = QtGui.QCursor(QtGui.QPixmap('pencil.png'), 6, 27)
         self.getOGl().setCursor(self.CURSOR_Pencil)
 
     def ButtonDownEvent(self,event):

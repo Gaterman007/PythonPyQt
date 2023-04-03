@@ -214,8 +214,7 @@ class API:
             self.axesModel[i].visible = value
         
     def defaultGrille(self):
-        self.grilleModel = ModelDefault(Name = 'Grille',progName = 'def3')
-        self.grilleModel.internal = True
+        self.grilleModel = ModelDefault(Name = 'Grille',progName = 'def3',internal=True)
 
         for i in range(-30,31):
             if i != 0:
@@ -230,26 +229,23 @@ class API:
     def defaultAxes(self):
         axesSize = 1000.0
 
-        self.axesModel[0] = ModelDefault(Name = 'Axe Y',progName = 'def3')
+        self.axesModel[0] = ModelDefault(Name = 'Axe Y',progName = 'def3',internal=True)
         seg = Segment(start = Point3D(0.0, -axesSize, 0.0),end = Point3D(0.0, axesSize, 0.0))
         self.axesModel[0].addSegment(seg)
         self.axesModel[0].segmentColor = glm.vec4(1.0, 0.0, 0.0, 1.0)
-        self.axesModel[0].internal = True
 
         self.mainWin.oglFrame.drawModelList.append(self.axesModel[0])
 
-        self.axesModel[1] = ModelDefault(Name = 'Axe X',progName = 'def3')
+        self.axesModel[1] = ModelDefault(Name = 'Axe X',progName = 'def3',internal=True)
         seg = Segment(start = Point3D(-axesSize, 0.0, 0.0),end = Point3D(axesSize, 0.0, 0.0))
         self.axesModel[1].addSegment(seg)
         self.axesModel[1].segmentColor = glm.vec4(0.0, 1.0, 0.0, 1.0)
-        self.axesModel[1].internal = True
         self.mainWin.oglFrame.drawModelList.append(self.axesModel[1])
 
-        self.axesModel[2] = ModelDefault(Name = 'Axe Z',progName = 'def3')
+        self.axesModel[2] = ModelDefault(Name = 'Axe Z',progName = 'def3',internal=True)
         seg = Segment(start = Point3D(0.0,0.0, -axesSize),end = Point3D(0.0,0.0, axesSize))
         self.axesModel[2].addSegment(seg)
         self.axesModel[2].segmentColor = glm.vec4(0.0, 0.0, 1.0, 1.0)
-        self.axesModel[2].internal = True
         self.mainWin.oglFrame.drawModelList.append(self.axesModel[2])
         self.axesVisible(True)
 

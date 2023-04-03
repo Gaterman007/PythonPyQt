@@ -229,22 +229,22 @@ class OglFrame(QOpenGLWidget):
         self.defModel.addSegment(segment4)
         self.defModel.faceColor = glm.vec4(1.0, 0.0, 1.0, 1.0)
         # counter clock wise
-        # front face  1,3,2  1,4,3 5,6,7 5,7,8 1,2,5 2,6,5
+        # front face  0,2,1,0,3,2  
         triangle2 = [Triangle(p1 = point1, p2 = point3,p3 = point2,uv1 = glm.vec2(0.0,1.0),uv2 = glm.vec2(1.0,0.0),uv3 = glm.vec2(0.0,0.0))]
         triangle2.append(Triangle(p1 = point1, p2 = point4,p3 = point3,uv1 = glm.vec2(0.0,1.0),uv2 = glm.vec2(1.0,1.0),uv3 = glm.vec2(1.0,0.0)))
-        # back face
+        # back face 4,5,6,4,6,7
         triangle2.append(Triangle(p1 = point5, p2 = point6,p3 = point7,uv1 = glm.vec2(0.0,1.0),uv2 = glm.vec2(1.0,0.0),uv3 = glm.vec2(0.0,0.0)))
         triangle2.append(Triangle(p1 = point5, p2 = point7,p3 = point8,uv1 = glm.vec2(0.0,1.0),uv2 = glm.vec2(1.0,1.0),uv3 = glm.vec2(1.0,0.0)))
-        # right face
+        # right face 0,1,4,1,5,4
         triangle2.append(Triangle(p1 = point1, p2 = point2,p3 = point5,uv1 = glm.vec2(0.0,1.0),uv2 = glm.vec2(1.0,1.0),uv3 = glm.vec2(1.0,0.0)))
         triangle2.append(Triangle(p1 = point2, p2 = point6,p3 = point5,uv1 = glm.vec2(0.0,1.0),uv2 = glm.vec2(1.0,1.0),uv3 = glm.vec2(1.0,0.0)))
-        # left face
+        # left face 2,6,3,3,6,7
         triangle2.append(Triangle(p1 = point3, p2 = point4,p3 = point7,uv1 = glm.vec2(0.0,1.0),uv2 = glm.vec2(1.0,1.0),uv3 = glm.vec2(1.0,0.0)))
         triangle2.append(Triangle(p1 = point4, p2 = point8,p3 = point7,uv1 = glm.vec2(0.0,1.0),uv2 = glm.vec2(1.0,1.0),uv3 = glm.vec2(1.0,0.0)))
-        # top face
+        # top face 0,3,4,3,7,4
         triangle2.append(Triangle(p1 = point1, p2 = point5,p3 = point4,uv1 = glm.vec2(0.0,1.0),uv2 = glm.vec2(1.0,1.0),uv3 = glm.vec2(1.0,0.0)))
         triangle2.append(Triangle(p1 = point4, p2 = point5,p3 = point8,uv1 = glm.vec2(0.0,1.0),uv2 = glm.vec2(1.0,1.0),uv3 = glm.vec2(1.0,0.0)))
-        # bottom face
+        # bottom face 1,5,2,2,5,6
         triangle2.append(Triangle(p1 = point2, p2 = point3,p3 = point6,uv1 = glm.vec2(0.0,1.0),uv2 = glm.vec2(1.0,1.0),uv3 = glm.vec2(1.0,0.0)))
         triangle2.append(Triangle(p1 = point3, p2 = point7,p3 = point6,uv1 = glm.vec2(0.0,1.0),uv2 = glm.vec2(1.0,1.0),uv3 = glm.vec2(1.0,0.0)))
 
@@ -279,8 +279,20 @@ class OglFrame(QOpenGLWidget):
                                     Point3D( 0.5,  0.5, -0.5, 1.0, 1.0),
                                     Point3D(-0.5,  0.5, -0.5, 0.0, 1.0)])
         newdef2Model.pointSize = 4.0
-        newdef2Model.addIndices([0,1,2,3,4,5,6,7,0,1,2,0,2,3,4,6,5,4,7,6,9,4,1,1,4,5])
-        newdef2Model.renders = [(GL_POINTS,2,0),((GL_TRIANGLES,3,4))]
+        newdef2Model.addIndices([0,1,2,3,4,5,6,7])  # 8 Point
+        # faces
+        newdef2Model.addIndices([0,1,2,0,2,3])      # Front
+        newdef2Model.addIndices([4,6,5,4,7,6])      # Back
+        newdef2Model.addIndices([0,4,1,1,4,5])      # Right
+        newdef2Model.addIndices([2,6,3,3,6,7])      # Left
+        newdef2Model.addIndices([0,3,4,3,7,4])      # Top
+        newdef2Model.addIndices([1,5,2,2,5,6])      # Bottom
+
+        #  8 point Vert et 12 Triangle Rouge
+        newdef2Model.addRender(GL_POINTS,8,0,(0.0,1.0,0.0,1.0))
+        newdef2Model.addRender(GL_LINE_LOOP,4,0,(0.0,0.0,1.0,1.0))
+        newdef2Model.addRender(GL_LINE_LOOP,4,4*4,(0.0,0.0,1.0,1.0))
+        newdef2Model.addRender(GL_TRIANGLES,36,8*4,(1.0,0.0,0.0,1.0))
 
         self.drawModelList.append(newdef2Model)
 
