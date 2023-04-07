@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QStatusBar,QDockWidget,QListWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QStatusBar,QDockWidget,QListWidget,QMessageBox
 from Model import BaseModel
 
 class ModelExplorer(QDockWidget):
@@ -12,18 +12,38 @@ class ModelExplorer(QDockWidget):
         self.setFloating(False)
         self.setMaximumWidth(450)
         self.listWidget = QListWidget()
+        self.listWidget.itemClicked.connect(self.Clicked)
         self.addItem('No Model')
         self.setWidget(self.listWidget)
 
         BaseModel.updateListCB(self.loadModels)
+        BaseModel.updateSelectionCB(self.updateSelection)
         self.loadModels(BaseModel.modelList)
+        self.updateSelection(BaseModel.selectedModel,BaseModel.modelList)
 
+    def Clicked(self,item):
+        indexX = 0
+        FoundX = -1
+        ModelSelected = None
+        for modelInList in BaseModel.modelList:
+            if not modelInList[2].internal:
+                if item.text() == modelInList[1]:
+                    FoundX = indexX
+                    ModelSelected = modelInList[2]
+                indexX = indexX + 1
+        if FoundX != -1:
+            BaseModel.setSelectedModel(ModelSelected)
+#        QMessageBox.information(self, "ListWidget", "You clicked: "+item.text())
         
     def __del__(self):
         BaseModel.updateListCB(None)
+        BaseModel.updateSelectionCB(None)
         
     def addItem(self,itemDesc):
         self.listWidget.addItem(itemDesc)
+
+    def setCurrentItem(self,itemNo):
+        self.listWidget.setCurrentRow(itemNo)
 
     def loadModels(self,modelList):
         self.listWidget.clear()
@@ -32,3 +52,15 @@ class ModelExplorer(QDockWidget):
                 self.addItem(model[1])   #self.modelID,self.modelName,self
         if self.listWidget.count() <= 0:
             self.addItem('No Model')
+
+    def updateSelection(self,model,modelList):
+        indexX = 0
+        FoundX = -1
+        self.listWidget.clearSelection()
+        for modelInList in modelList:
+            if not modelInList[2].internal:
+                if model == modelInList[2]:
+                    FoundX = indexX
+                indexX = indexX + 1
+        if FoundX != -1:
+            self.setCurrentItem(FoundX)

@@ -29,40 +29,40 @@ class Plane():
         return planePoint
 
           
-class TriangleTest():
-    # glm vec3 for pointA pointB pointC
-    def __init__(self,Point_A = glm.vec3( 1.0,1.0,0.0),Point_B = glm.vec3(-1.0,1.0,0.0),Point_C = glm.vec3( 0.0,0.0,0.0)):
-        self.triPoint_A = Point_A
-        self.triPoint_B = Point_B
-        self.triPoint_C = Point_C
-        self.normal = glm.cross(Point_B - Point_A,Point_C - Point_A)
-#        self.triPoint_A = glm.vec3( 1.0,1.0,0.0)
-#        self.triPoint_B = glm.vec3(-1.0,1.0,0.0)
-#        self.triPoint_C = glm.vec3( 0.0,0.0,0.0)
-        
-    def testRay(self , camRay = Ray()):
-        plane = Plane(self.triPoint_A,self.normal)
-        n_dot_d = glm.dot(self.normal,camRay.rayDirection)
-        if glm.abs(n_dot_d) < 0.0001:
-            return False
-        n_dot_ps = glm.dot(self.normal,self.triPoint_A - camRay.startPoint)
-        camRay.t = n_dot_ps / n_dot_d
-#        planePoint = camRay.startPoint + camRay.t * camRay.rayDirection
-        planePoint = camRay.pointFromRay()
-        AtoB_Edge = triPoint_B - triPoint_A
-        BtoC_Edge = triPoint_C - triPoint_B
-        CtoA_Edge = triPoint_A - triPoint_C
-        AtoPoint = planePoint - triPoint_A
-        BtoPoint = planePoint - triPoint_B
-        CtoPoint = planePoint - triPoint_C
-        ATestVec = glm.cross(AtoB_Edge,AtoPoint)
-        BTestVec = glm.cross(BtoC_Edge,BtoPoint)
-        CTestVec = glm.cross(CtoA_Edge,CtoPoint)
-        AtestVecMatchNormal = glm.dot(ATestVec,self.normal) > 0.0
-        BtestVecMatchNormal = glm.dot(BTestVec,self.normal) > 0.0
-        CtestVecMatchNormal = glm.dot(CTestVec,self.normal) > 0.0
-        hitTriangle = AtestVecMatchNormal and BtestVecMatchNormal and CtestVecMatchNormal
-        return hitTriangle
+#class TriangleTest():
+#    # glm vec3 for pointA pointB pointC
+#    def __init__(self,Point_A = glm.vec3( 1.0,1.0,0.0),Point_B = glm.vec3(-1.0,1.0,0.0),Point_C = glm.vec3( 0.0,0.0,0.0)):
+#        self.triPoint_A = Point_A
+#        self.triPoint_B = Point_B
+#        self.triPoint_C = Point_C
+#        self.normal = glm.cross(Point_B - Point_A,Point_C - Point_A)
+##        self.triPoint_A = glm.vec3( 1.0,1.0,0.0)
+##        self.triPoint_B = glm.vec3(-1.0,1.0,0.0)
+##        self.triPoint_C = glm.vec3( 0.0,0.0,0.0)
+#        
+#    def testRay(self , camRay = Ray()):
+#        plane = Plane(self.triPoint_A,self.normal)
+#        n_dot_d = glm.dot(self.normal,camRay.rayDirection)
+#        if glm.abs(n_dot_d) < 0.0001:
+#            return False
+#        n_dot_ps = glm.dot(self.normal,self.triPoint_A - camRay.startPoint)
+#        camRay.t = n_dot_ps / n_dot_d
+##        planePoint = camRay.startPoint + camRay.t * camRay.rayDirection
+#        planePoint = camRay.pointFromRay()
+#        AtoB_Edge = triPoint_B - triPoint_A
+#        BtoC_Edge = triPoint_C - triPoint_B
+#        CtoA_Edge = triPoint_A - triPoint_C
+#        AtoPoint = planePoint - triPoint_A
+#        BtoPoint = planePoint - triPoint_B
+#        CtoPoint = planePoint - triPoint_C
+#        ATestVec = glm.cross(AtoB_Edge,AtoPoint)
+#        BTestVec = glm.cross(BtoC_Edge,BtoPoint)
+#        CTestVec = glm.cross(CtoA_Edge,CtoPoint)
+#        AtestVecMatchNormal = glm.dot(ATestVec,self.normal) > 0.0
+#        BtestVecMatchNormal = glm.dot(BTestVec,self.normal) > 0.0
+#        CtestVecMatchNormal = glm.dot(CTestVec,self.normal) > 0.0
+#        hitTriangle = AtestVecMatchNormal and BtestVecMatchNormal and CtestVecMatchNormal
+#        return hitTriangle
         
             
 class CameraBehavior(Enum):
@@ -79,9 +79,9 @@ SENSITIVITY = 0.01
 DEFAULT_ROTATION_SPEED = 0.3
 
 
-DEFAULT_FOVX = 30.0
+DEFAULT_FOVX = 10.0
 DEFAULT_ZNEAR = 0.1
-DEFAULT_ZFAR = 1000.0
+DEFAULT_ZFAR = 500.0
 
 DEFAULT_ORBIT_MIN_ZOOM = DEFAULT_ZNEAR + 1.0
 DEFAULT_ORBIT_MAX_ZOOM = DEFAULT_ZFAR * 0.5

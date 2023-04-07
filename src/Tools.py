@@ -2,6 +2,7 @@ from enum import Enum
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt
 from Icons import Icons
+from Model import BaseModel
 import glm
 
 class ToolMode(Enum):
@@ -60,12 +61,20 @@ class SelectTool(MouseTool):
         self.mainWin.oglFrame.ButtonDown(event)
 
     def ButtonUpEvent(self,event):
+        listOfHits = self.getAPI().listHitTest((event.x(),event.y()))
+                
+        if len(listOfHits) > 0:
+            BaseModel.setSelectedModel(listOfHits[0])
+        else:
+            BaseModel.setSelectedModel(None)
+        
         self.mainWin.oglFrame.ButtonUp(event)
 #        self.getAPI().setSelectedModel()
 
     def MouseMoveEvent(self,event):
-        camera = self.getAPI().getCamera()
         self.getOGl().hudTexture.clear()
+
+        camera = self.getAPI().getCamera()
         ray = camera.get_Ray((event.x(),event.y()))
         onAModel = False
         onATriangle = False
@@ -73,10 +82,13 @@ class SelectTool(MouseTool):
         for drawModel in self.getOGl().drawModelList:
             if not drawModel.internal:
                 isOnModel, distance,isOnTriangle,isOnVertex = drawModel.HitTest(ray,triangleTest = True)
+#                print(drawModel.modelName)
+                if drawModel.modelName == "new Model":
+                    print(drawModel.minmaxextent)
+                    print(drawModel.maxXDiag,drawModel.maxYDiag,drawModel.maxZDiag)
                 if isOnModel:
                     onAModel = True
                 if isOnTriangle:
-                    print(drawModel.modelName)
                     onATriangle = True
                 if isOnVertex:
                     OnAVertex =  True

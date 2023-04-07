@@ -70,7 +70,9 @@ class Ray():
         hitTriangle = AtestVecMatchNormal and BtestVecMatchNormal and CtestVecMatchNormal
         return hitTriangle
 
-    def RayLineIntersect(point1,point2,point3,point4):
+    def RayLineIntersect(point3,point4):
+        point1 = self.startPoint + (self.rayDirection * 0.01)
+        point2 = self.startPoint + (self.rayDirection * 500)
         point13 = point1 - point3
         point43 = point4 - point3
         Epsilon = 0.0000001

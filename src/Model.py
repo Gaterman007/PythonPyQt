@@ -10,14 +10,23 @@ class BaseModel:
     nextModelID = 0
     modelList = []
     updateListCallback = None
+    selectedModel = None
+    updateSelectionCallback = None
     
     def __init__(self, *args,**kwargs):
         self.baseInit()
         self.m_proj = glm.mat4()
         self.m_view = glm.mat4()
+        self.pointColor = glm.vec4(1.0, 1.0, 1.0, 1.0)
+        self.segmentColor = glm.vec4(1.0, 1.0, 1.0, 1.0)
+        self.faceColor = glm.vec4(1.0, 1.0, 1.0, 1.0)
+
         self.maxDiag = 0.0
+        self.maxXDiag = 0.0
+        self.maxYDiag = 0.0
+        self.maxZDiag = 0.0
         self.centerInWorld = glm.vec4(0.0,0.0,0.0,1.0)
-        self.minmaxextent = [0,0,0,0,0,0]
+        self.minmaxextent = []
         self.pointCloud = []
         self.pointWorld = []
         self.pointIndices = []
@@ -25,11 +34,6 @@ class BaseModel:
         self.isOnModel = False
         self.hitDistance = 0.0
         
-
-
-        self.modelName = kwargs.get('Name',"model_%d" % self.modelID)
-        self.setModelName(self.modelName)
-
         self.progName = kwargs.get('progName',None)
         self.program = ShaderProgram.programs[self.progName]
         self.uniforms = ShaderProgram.uniforms[self.progName]
@@ -53,6 +57,8 @@ class BaseModel:
         self.visible = kwargs.get('visible',True)
         self.internal = kwargs.get('internal',False)
         self.update_model_matrix()
+        self.modelName = kwargs.get('Name',"model_%d" % self.modelID)
+        self.setModelName(self.modelName)
 
     def baseInit(self):
         self.modelID = BaseModel.nextModelID
@@ -67,9 +73,11 @@ class BaseModel:
         # find if self exist in list
 
         foundSelf = None
+        foundIndex = -1
         for idx in range(len(BaseModel.modelList)):
             if BaseModel.modelList[idx][2] == self:
                 foundSelf = BaseModel.modelList[idx]
+                foundIndex = idx
 
         if foundSelf is None:
             if foundName is None:
@@ -81,9 +89,11 @@ class BaseModel:
             if foundName is None:
                 self.modelName = "%s" % name
                 foundSelf = (foundSelf[0],name,foundSelf[2])
+                BaseModel.modelList[foundIndex] = (foundSelf[0],name,foundSelf[2])
             else:
                 if foundName != foundSelf: 
                     self.modelName = "%s(%d)" % (name,self.modelID)
+                    BaseModel.modelList[foundIndex] = (foundSelf[0],self.modelName,foundSelf[2])
                     foundSelf = (foundSelf[0],self.modelName,foundSelf[2])
         if BaseModel.updateListCallback is not None:
             BaseModel.updateListCallback(BaseModel.modelList)
@@ -91,6 +101,20 @@ class BaseModel:
     @classmethod
     def updateListCB(self, updateListCB):
         BaseModel.updateListCallback = updateListCB
+
+    @classmethod
+    def updateSelectionCB(self,updateSelectionCB):
+        BaseModel.updateSelectionCallback = updateSelectionCB
+        
+    @classmethod
+    def setSelectedModel(self,model):
+        self.selectedModel = model
+        if BaseModel.updateSelectionCallback is not None:
+            BaseModel.updateSelectionCallback(model,BaseModel.modelList)
+
+    @classmethod
+    def getSelectedModel(self):
+        return self.selectedModel
         
     def initAttribLocation(self):
         if self.program is not None:
@@ -143,16 +167,18 @@ class BaseModel:
                 self.minmaxextent[4] = point.y
             if self.minmaxextent[5] < point.z:
                 self.minmaxextent[5] = point.z
-            self.update_model_matrix()
+        self.update_model_matrix()
 
     def fixDiagonalandCenter(self,newMatrix):
-            self.maxDiag = self.minmaxextent[3] - self.minmaxextent[0]
-            newDiag = self.minmaxextent[4] - self.minmaxextent[1]
-            if self.maxDiag > newDiag:
-                self.maxDiag = newDiag
-            newDiag = self.minmaxextent[5] - self.minmaxextent[2]
-            if self.maxDiag > newDiag:
-                self.maxDiag = newDiag
+        if len(self.minmaxextent) > 1:
+            self.maxXDiag = math.fabs(self.minmaxextent[3] - self.minmaxextent[0])
+            self.maxDiag = self.maxXDiag
+            self.maxYDiag = math.fabs(self.minmaxextent[4] - self.minmaxextent[1])
+            if self.maxDiag < self.maxYDiag:
+                self.maxDiag = self.maxYDiag
+            self.maxZDiag = math.fabs(self.minmaxextent[5] - self.minmaxextent[2])
+            if self.maxDiag < self.maxZDiag:
+                self.maxDiag = self.maxZDiag
             self.centerInWorld.x = self.minmaxextent[3] + self.minmaxextent[0]
             self.centerInWorld.y = self.minmaxextent[4] + self.minmaxextent[1]
             self.centerInWorld.z = self.minmaxextent[5] + self.minmaxextent[2]
@@ -200,14 +226,21 @@ class BaseModel:
         if 'm_view' in self.uniforms:
             self.m_view = camera.get_view()
 
+    def addPoint3D(self,point3D): # Point3D
+        if type(point3D) == type([]):
+            self.pointCloud.extend(point3D) # add many points
+            x = 0
+            while x < len(point3D):
+                self.updateBBox(point3D[x])
+                x = x + 1
+        else:
+            self.pointCloud.append(point3D) # add one point
+            self.updateBBox(point3D)
+
 
 class ModelDef2(BaseModel):
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
-
-        self.pointColor = glm.vec4(1.0, 1.0, 1.0, 1.0)
-        self.segmentColor = glm.vec4(1.0, 1.0, 1.0, 1.0)
-        self.faceColor = glm.vec4(1.0, 1.0, 1.0, 1.0)
 
         self.drawRender = False
         self.VAO = None
@@ -248,15 +281,7 @@ class ModelDef2(BaseModel):
         self.drawRender = True
 
     def addPoint3D(self,point3D): # Point3D
-        if type(point3D) == type([]):
-            self.pointCloud.extend(point3D) # add many points
-            x = 0
-            while x < len(point3D):
-                self.updateBBox(point3D[x])
-                x = x + 1
-        else:
-            self.pointCloud.append(point3D) # add one point
-            self.updateBBox(point3D)
+        super().addPoint3D(point3D)
         self.createVAO()
 
 
@@ -346,7 +371,7 @@ class ModelDef2(BaseModel):
                     ShaderProgram.inst().UseProgram(0)
 
 
-class ModelDefault(ModelDef2):
+class ModelDefault(BaseModel):
     def __init__(self,*args,**kwargs):
 
         self.segments = []
@@ -569,6 +594,7 @@ class ModelDefault(ModelDef2):
             self.updateBBox(triangle3D.p2)
             self.updateBBox(triangle3D.p3)
         self.createTriangleBuffer()
+        self.fixDiagonalandCenter(self.m_model)
 #        print(self.minmaxextent)
 
     def updateWorldCoord(self):
@@ -586,9 +612,7 @@ class ModelDefault(ModelDef2):
         self.isOnATriangle = False
         self.isOnVertex = False
         if triangleTest and self.isOnModel:
-            print(len(self.pointWorld))
             for i in range(len(self.triangles)):
-                print(self.modelName," ",i)
                 if ray.IntersectTriangle(self.pointWorld[(i*3)],self.pointWorld[(i*3)+1],self.pointWorld[(i*3)+2]):
                     self.isOnATriangle = True
         return self.isOnModel, self.hitDistance,self.isOnATriangle,self.isOnVertex

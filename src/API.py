@@ -25,13 +25,12 @@ class API:
         self.mainWin = mainWin
         self.mouseTool = SelectTool(self.mainWin)
         self.grilleModel = None
-        self.selectedModel = None
         self.axesModel = [None,None,None]
         self.modelListDisp = None
 
 
     def setSelectedModel(self,model):
-        self.selectedModel = model
+        BaseModel.setSelectedModel(model)
         
     def statusFrameExec(self,*args, **kwargs):
         if len(args) > 0:
@@ -171,39 +170,43 @@ class API:
 
     def newModel(self,actionData):
         self.mainWin.oglFrame.makeCurrent()
-        self.selectedModel = ModelDefault(progName = 'def3')
-        self.selectedModel.setModelName("new Model")
-        self.selectedModel.pointSize = 5.0
-        self.selectedModel.segmentColor = glm.vec4(0.0, 1.0, 1.0, 1.0)
-        self.selectedModel.faceColor = glm.vec4(0.0, 1.0, 1.0, 1.0)
-#        self.selectedModel.addPoint3D(Point3D(-4.0,0.0,-3.0))
+        selectedModel = ModelDefault(progName = 'def3')
+        BaseModel.setSelectedModel(selectedModel)
+        selectedModel.setModelName("new Model")
+        selectedModel.pointSize = 5.0
+        selectedModel.segmentColor = glm.vec4(0.0, 1.0, 1.0, 1.0)
+        selectedModel.faceColor = glm.vec4(0.0, 1.0, 1.0, 1.0)
+#        selectedModel.addPoint3D(Point3D(-4.0,0.0,-3.0))
 #        seg = Segment(start = Point3D(-4.0,-4.0,-1.0), end = Point3D(4.0,4.0,1.0))
-#        self.selectedModel.addSegment(seg)
+#        selectedModel.addSegment(seg)
 #        seg = Segment(start = Point3D(2.0,0.0,1.0), end = Point3D(4.0,0.0,2.0))
-#        self.selectedModel.addSegment(seg)
-#        self.selectedModel.createSegmentBuffer()
-        self.mainWin.oglFrame.drawModelList.append(self.selectedModel)
+#        selectedModel.addSegment(seg)
+#        selectedModel.createSegmentBuffer()
+        self.mainWin.oglFrame.drawModelList.append(selectedModel)
         self.mainWin.oglFrame.doneCurrent()
         
     def selectedModelAddTriangle(self,point1,point2,point3):
-        if self.selectedModel is not None:
+        selectedModel = BaseModel.getSelectedModel()
+        if BaseModel.getSelectedModel() is not None:
             self.mainWin.oglFrame.makeCurrent()
-            self.selectedModel.addTriangle(Triangle(p1 = point1, p2 = point2, p3 = point3))
+            selectedModel.addTriangle(Triangle(p1 = point1, p2 = point2, p3 = point3))
             self.mainWin.oglFrame.doneCurrent()
     
     
     def selectedModelAddSegment(self,startPos,endPos):
-        if self.selectedModel is not None:
+        selectedModel = BaseModel.getSelectedModel()
+        if selectedModel is not None:
             self.mainWin.oglFrame.makeCurrent()
-            self.selectedModel.addSegment(Segment(start = Point3D(startPos[0],startPos[1],startPos[2]), end = Point3D(endPos[0],endPos[1],endPos[2])))
+            selectedModel.addSegment(Segment(start = Point3D(startPos[0],startPos[1],startPos[2]), end = Point3D(endPos[0],endPos[1],endPos[2])))
             self.mainWin.oglFrame.doneCurrent()
 
     def selectedModelAddPoint(self,mPos):
-        if self.selectedModel is not None:
+        selectedModel = BaseModel.getSelectedModel()
+        if selectedModel is not None:
             camera = self.getCamera()
             vecteur = camera.testRay(mPos)
             self.mainWin.oglFrame.makeCurrent()
-            self.selectedModel.addPoint3D(Point3D(vecteur.x,vecteur.y,vecteur.z))
+            selectedModel.addPoint3D(Point3D(vecteur.x,vecteur.y,vecteur.z))
             self.mainWin.oglFrame.doneCurrent()
 
     def toogle_Grille(self,value):
@@ -218,13 +221,14 @@ class API:
         
     def defaultGrille(self):
         self.grilleModel = ModelDefault(Name = 'Grille',progName = 'def3',internal=True)
-
-        for i in range(-30,31):
+        GridSize = 200
+        halfGridSize = int(GridSize / 2)
+        for i in range(-halfGridSize,halfGridSize+1):
             if i != 0:
-                self.grilleModel.addSegment(Segment(start = Point3D(i,  0.0, 30.0),end = Point3D(i,  0.0, -30.0)))
-        for i in range(-30,31):
+                self.grilleModel.addSegment(Segment(start = Point3D(i,  0.0, halfGridSize),end = Point3D(i,  0.0, -halfGridSize)))
+        for i in range(-halfGridSize,halfGridSize+1):
             if i != 0:
-                self.grilleModel.addSegment(Segment(start = Point3D(30.0,  0.0, i),end = Point3D(-30,  0.0, i)))
+                self.grilleModel.addSegment(Segment(start = Point3D(halfGridSize,  0.0, i),end = Point3D(-halfGridSize,  0.0, i)))
         self.mainWin.oglFrame.drawModelList.append(self.grilleModel)
         self.grilleModel.visible = False
 #        self.defaultAxes()
@@ -251,6 +255,17 @@ class API:
         self.axesModel[2].segmentColor = glm.vec4(0.0, 0.0, 1.0, 1.0)
         self.mainWin.oglFrame.drawModelList.append(self.axesModel[2])
         self.axesVisible(True)
+
+    def listHitTest(self,mPos):
+        camera = self.getCamera()
+        ray = camera.get_Ray((mPos[0],mPos[1]))
+        listOfHits = []
+        for drawModel in self.mainWin.oglFrame.drawModelList:
+            if not drawModel.internal:
+                isOnModel, distance,isOnTriangle,isOnVertex = drawModel.HitTest(ray,triangleTest = True)
+                if isOnTriangle:
+                    listOfHits.append(drawModel)
+        return listOfHits
 
     def picking(self,mPos):
         camera = self.getCamera()
