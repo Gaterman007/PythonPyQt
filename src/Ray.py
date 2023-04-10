@@ -15,11 +15,14 @@ class Ray():
     def intersectionSphere(self,SphereOrigine,SphereRayon):
         # dot of ray direction
         a = (self.rayDirection.x * self.rayDirection.x) + (self.rayDirection.y * self.rayDirection.y) + (self.rayDirection.z * self.rayDirection.z)
-        b = 2*(self.rayDirection.x*(self.startPoint.x-SphereOrigine.x) + self.rayDirection.y*(self.startPoint.y-SphereOrigine.y) + self.rayDirection.z*(self.startPoint.z-SphereOrigine.z))
 
         xx = self.startPoint.x - SphereOrigine.x
         yy = self.startPoint.y - SphereOrigine.y
         zz = self.startPoint.z - SphereOrigine.z
+
+        b = 2*(self.rayDirection.x*(xx) + self.rayDirection.y*(yy) + self.rayDirection.z*(zz))
+
+
         c = xx*xx + yy*yy + zz*zz - SphereRayon*SphereRayon
 
         discriminant = b*b - 4*a*c

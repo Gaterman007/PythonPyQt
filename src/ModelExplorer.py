@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QStatusBar,QDockWidget,QListWidget,QMessageBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QStatusBar,QDockWidget,QListWidget,QMessageBox,QListWidgetItem
 from Model import BaseModel
 
 class ModelExplorer(QDockWidget):
@@ -18,22 +18,25 @@ class ModelExplorer(QDockWidget):
 
         BaseModel.updateListCB(self.loadModels)
         BaseModel.updateSelectionCB(self.updateSelection)
-        self.loadModels(BaseModel.modelList)
-        self.updateSelection(BaseModel.selectedModel,BaseModel.modelList)
+        self.loadModels()
+        self.updateSelection(BaseModel.selectedModel)
 
     def Clicked(self,item):
-        indexX = 0
-        FoundX = -1
-        ModelSelected = None
-        for modelInList in BaseModel.modelList:
-            if not modelInList[2].internal:
-                if item.text() == modelInList[1]:
-                    FoundX = indexX
-                    ModelSelected = modelInList[2]
-                indexX = indexX + 1
-        if FoundX != -1:
-            BaseModel.setSelectedModel(ModelSelected)
-#        QMessageBox.information(self, "ListWidget", "You clicked: "+item.text())
+#        indexX = 0
+#        FoundX = -1
+#        ModelSelected = None
+        if item.text() in BaseModel.newmodelList:
+            BaseModel.setSelectedModel(BaseModel.newmodelList[item.text()])
+            
+#        for modelInList in BaseModel.modelList:
+#            if not modelInList[2].internal:
+#                if item.text() == modelInList[1]:
+#                    FoundX = indexX
+#                    ModelSelected = modelInList[2]
+#                indexX = indexX + 1
+#        if FoundX != -1:
+#            BaseModel.setSelectedModel(ModelSelected)
+##        QMessageBox.information(self, "ListWidget", "You clicked: "+item.text())
         
     def __del__(self):
         BaseModel.updateListCB(None)
@@ -45,22 +48,27 @@ class ModelExplorer(QDockWidget):
     def setCurrentItem(self,itemNo):
         self.listWidget.setCurrentRow(itemNo)
 
-    def loadModels(self,modelList):
+    def loadModels(self):
         self.listWidget.clear()
-        for model in modelList:
-            if not model[2].internal:
-                self.addItem(model[1])   #self.modelID,self.modelName,self
+        for model in BaseModel.newmodelList:
+            if not BaseModel.newmodelList[model].internal:
+                self.addItem(BaseModel.newmodelList[model].modelName)   #self.modelID,self.modelName,self
         if self.listWidget.count() <= 0:
             self.addItem('No Model')
 
-    def updateSelection(self,model,modelList):
-        indexX = 0
-        FoundX = -1
+    def updateSelection(self,model):
+#        indexX = 0
+#        FoundX = -1
         self.listWidget.clearSelection()
-        for modelInList in modelList:
-            if not modelInList[2].internal:
-                if model == modelInList[2]:
-                    FoundX = indexX
-                indexX = indexX + 1
-        if FoundX != -1:
-            self.setCurrentItem(FoundX)
+        if model is not None:
+            if model.modelName in BaseModel.newmodelList:
+                for index in range(self.listWidget.count()):
+                    if self.listWidget.item(index).text() == model.modelName:
+                        self.listWidget.setCurrentRow(index)
+#        for modelInList in BaseModel.newmodelList:
+#            if not modelInList.internal:
+#                if model == modelInList[2]:
+#                    FoundX = indexX
+#                indexX = indexX + 1
+#        if FoundX != -1:
+#            self.setCurrentItem(FoundX)

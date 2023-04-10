@@ -9,6 +9,7 @@ import sys
 class BaseModel:
     nextModelID = 0
     modelList = []
+    newmodelList = {}
     updateListCallback = None
     selectedModel = None
     updateSelectionCallback = None
@@ -57,46 +58,58 @@ class BaseModel:
         self.visible = kwargs.get('visible',True)
         self.internal = kwargs.get('internal',False)
         self.update_model_matrix()
-        self.modelName = kwargs.get('Name',"model_%d" % self.modelID)
-        self.setModelName(self.modelName)
+        self.modelName = ""
+        self.setModelName(kwargs.get('Name',"model_%d" % self.modelID))
 
     def baseInit(self):
         self.modelID = BaseModel.nextModelID
         BaseModel.nextModelID += 1
 
     def setModelName(self,name):
-        # find if name exist in list
-        foundName = None
-        for idx in range(len(BaseModel.modelList)):
-            if BaseModel.modelList[idx][1] == name:
-                foundName = BaseModel.modelList[idx]
-        # find if self exist in list
-
-        foundSelf = None
-        foundIndex = -1
-        for idx in range(len(BaseModel.modelList)):
-            if BaseModel.modelList[idx][2] == self:
-                foundSelf = BaseModel.modelList[idx]
-                foundIndex = idx
-
-        if foundSelf is None:
-            if foundName is None:
-                BaseModel.modelList.append((self.modelID,name,self))
-            else:
+        if name != self.modelName:
+            # find self  remove from list
+            if self.modelName in BaseModel.newmodelList:
+                my_dict.pop(self.modelName, None)
+            if name in BaseModel.newmodelList:
+                # new name already in list so add model id
                 self.modelName = "%s(%d)" % (name,self.modelID)
-                BaseModel.modelList.append((self.modelID,self.modelName,self))
-        else:
-            if foundName is None:
-                self.modelName = "%s" % name
-                foundSelf = (foundSelf[0],name,foundSelf[2])
-                BaseModel.modelList[foundIndex] = (foundSelf[0],name,foundSelf[2])
             else:
-                if foundName != foundSelf: 
-                    self.modelName = "%s(%d)" % (name,self.modelID)
-                    BaseModel.modelList[foundIndex] = (foundSelf[0],self.modelName,foundSelf[2])
-                    foundSelf = (foundSelf[0],self.modelName,foundSelf[2])
+                self.modelName = "%s" % name
+            BaseModel.newmodelList[self.modelName] = self
+
+#        # find if name exist in list
+#        foundName = None
+#        for idx in range(len(BaseModel.modelList)):
+#            if BaseModel.modelList[idx][1] == name:
+#                foundName = BaseModel.modelList[idx]
+#        # find if self exist in list
+#
+#        foundSelf = None
+#        foundIndex = -1
+#        for idx in range(len(BaseModel.modelList)):
+#            if BaseModel.modelList[idx][2] == self:
+#                foundSelf = BaseModel.modelList[idx]
+#                foundIndex = idx
+#
+#        if foundSelf is None:
+#            if foundName is None:
+#                BaseModel.modelList.append((self.modelID,name,self))
+#            else:
+#                self.modelName = "%s(%d)" % (name,self.modelID)
+#                BaseModel.modelList.append((self.modelID,self.modelName,self))
+#        else:
+#            if foundName is None:
+#                self.modelName = "%s" % name
+#                foundSelf = (foundSelf[0],name,foundSelf[2])
+#                BaseModel.modelList[foundIndex] = (foundSelf[0],name,foundSelf[2])
+#            else:
+#                if foundName != foundSelf: 
+#                    self.modelName = "%s(%d)" % (name,self.modelID)
+#                    BaseModel.modelList[foundIndex] = (foundSelf[0],self.modelName,foundSelf[2])
+#                    foundSelf = (foundSelf[0],self.modelName,foundSelf[2])
+
         if BaseModel.updateListCallback is not None:
-            BaseModel.updateListCallback(BaseModel.modelList)
+            BaseModel.updateListCallback()
 
     @classmethod
     def updateListCB(self, updateListCB):
@@ -110,7 +123,7 @@ class BaseModel:
     def setSelectedModel(self,model):
         self.selectedModel = model
         if BaseModel.updateSelectionCallback is not None:
-            BaseModel.updateSelectionCallback(model,BaseModel.modelList)
+            BaseModel.updateSelectionCallback(model)
 
     @classmethod
     def getSelectedModel(self):

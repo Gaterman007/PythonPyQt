@@ -54,16 +54,18 @@ class OglFrame(QOpenGLWidget):
             self.moveCamera = True
             self.oldPos_x = event.x()
             self.oldPos_y = event.y()
+            self.rel_x = 0
+            self.rel_y = 0
         self.oldMousePos = event.pos()
         
     def MouseMove(self,event):
         if self.buttonLeft:
             if self.oldPos_x != event.x():
                 self.rel_x = self.oldPos_x - event.x()
-            self.oldPos_x = event.x()
+                self.oldPos_x = event.x()
             if self.oldPos_y != event.y():
                 self.rel_y = self.oldPos_y - event.y()
-            self.oldPos_y = event.y()
+                self.oldPos_y = event.y()
     
     def ButtonUp(self,event):
         if event.button() == QtCore.Qt.LeftButton:
