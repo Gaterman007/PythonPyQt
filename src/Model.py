@@ -179,9 +179,9 @@ class BaseModel:
             self.maxZDiag = math.fabs(self.minmaxextent[5] - self.minmaxextent[2])
             if self.maxDiag < self.maxZDiag:
                 self.maxDiag = self.maxZDiag
-            self.centerInWorld.x = self.minmaxextent[3] + self.minmaxextent[0]
-            self.centerInWorld.y = self.minmaxextent[4] + self.minmaxextent[1]
-            self.centerInWorld.z = self.minmaxextent[5] + self.minmaxextent[2]
+            self.centerInWorld.x = self.minmaxextent[0] + (self.maxXDiag / 2)
+            self.centerInWorld.y = self.minmaxextent[1] + (self.maxYDiag / 2)
+            self.centerInWorld.z = self.minmaxextent[2] + (self.maxZDiag / 2)
             self.centerInWorld = newMatrix*self.centerInWorld
 
     def HitTest(self,ray,triangleTest = False):

@@ -19,7 +19,7 @@ class OglFrame(QOpenGLWidget):
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.updateAll)
 
-        self.camera = [Camera(self,position=(5,5,20),pitch=-5,yaw=-90),Camera(self,position=(34,8,0), pitch=0, yaw=180)]
+        self.camera = [Camera(self,position=(5,5,40),pitch=-5,yaw=-90),Camera(self,position=(34,8,0), pitch=0, yaw=180)]
         self.cameraNumber = 0
 
         self.t0 = tm.time()
@@ -258,7 +258,7 @@ class OglFrame(QOpenGLWidget):
 #        self.defModel.setRotation((45,15,30))
 #        self.defModel.setRotation(glm.vec3(45,15,30)) # est aussi correct
 
-        self.defModel.setPosition(glm.vec3(4,2,2))
+        self.defModel.setPosition(glm.vec3(4,2,-2))
 
 
         self.drawModelList.append(self.defModel)
