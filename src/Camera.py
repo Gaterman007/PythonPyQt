@@ -79,7 +79,7 @@ SENSITIVITY = 0.01
 DEFAULT_ROTATION_SPEED = 0.3
 
 
-DEFAULT_FOVX = 10.0
+DEFAULT_FOVX = 70.0
 DEFAULT_ZNEAR = 0.1
 DEFAULT_ZFAR = 500.0
 
@@ -102,7 +102,40 @@ CAMERA_SPEED_ORBIT_ROLL = 100.0
 CAMERA_ACCELERATION = glm.vec3(4.0, 4.0, 4.0);
 CAMERA_VELOCITY = glm.vec3(1.0, 1.0, 1.0);
 
+class Cameras(dict):
 
+    _instance = None
+
+    mainCamera = None
+    
+    def __init__(self):
+        raise RuntimeError('Call instance() instead')
+
+    @classmethod
+    def inst(self,oglFrame = None):
+        if self._instance is None:
+            self._instance = self.__new__(self)
+            if oglFrame is not None:
+                self.oglFrame = oglFrame
+            else:
+                self.oglFrame = None
+            self._instance.__setitem__('_Default_',Camera(self.oglFrame,position=(5,5,40),pitch=-5,yaw=-90))
+            self.mainCamera = self._instance['_Default_']
+            # Put any initialization here.
+        return self._instance
+        
+    def newCamera(self,name):
+        self.__setitem__(name,Camera(self.oglFrame,position=(5,5,40),pitch=-5,yaw=-90))
+
+    def setCamera(self,name):
+        if name in self:
+            self.mainCamera = self._instance[name]
+        else:
+            self.mainCamera = self._instance['_Default_']
+            
+    def getMainCamera(self):
+        return self.mainCamera
+       
 class Camera:
     def __init__(self, oglFrame, position=(0, 0, 20), yaw=-90, pitch=0, roll=0):
         self.oglFrame = oglFrame
@@ -286,6 +319,15 @@ class Camera:
         self.perspective(glm.radians(self.m_fovx), self.m_aspectRatio, self.m_znear, self.m_zfar)
         self.invertedProjectionMatrix = glm.inverse(self.m_projMatrix)
 
+    def getFovx(self):
+        return self.m_fovx
+        
+    def setFovx(self,fovx):
+        self.m_fovx = fovx
+        self.perspective(glm.radians(self.m_fovx), self.m_aspectRatio, self.m_znear, self.m_zfar)
+        self.invertedProjectionMatrix = glm.inverse(self.m_projMatrix)
+        
+
     def get_view_matrix(self):
         return self.m_viewMatrix
 
@@ -434,11 +476,19 @@ class Camera:
 #Zoom
 #Mouse input
 
+    def setYaw(self,yaw):
+        self.yaw = yaw
+        self.update_camera_vectors()
+
     def getYaw(self):
         return self.yaw
 
     def getPitch(self):
         return self.pitch
+
+    def setPitch(self,pitch):
+        self.pitch = max(-89, min(89, pitch))
+        self.update_camera_vectors()
 
     def getRoll(self):
         return self.roll

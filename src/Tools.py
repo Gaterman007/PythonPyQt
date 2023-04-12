@@ -83,10 +83,10 @@ class SelectTool(MouseTool):
             if not drawModel.internal:
                 isOnModel, distance,isOnTriangle,isOnVertex = drawModel.HitTest(ray,triangleTest = True)
                 if isOnModel:
-#                    if not isOnTriangle:
-#                        print(drawModel.modelName)
-#                        print(drawModel.centerInWorld,drawModel.maxDiag)
-#                        print(drawModel.minmaxextent)
+                    if not isOnTriangle:
+                        print(drawModel.modelName)
+                        print(drawModel.centerInWorld,drawModel.maxDiag/2)
+                        print(drawModel.minmaxextent)
 #                        print(drawModel.maxXDiag,drawModel.maxYDiag,drawModel.maxZDiag)
                     onAModel = True
                 if isOnTriangle:

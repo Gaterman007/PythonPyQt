@@ -19,8 +19,14 @@ class OglFrame(QOpenGLWidget):
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.updateAll)
 
-        self.camera = [Camera(self,position=(5,5,40),pitch=-5,yaw=-90),Camera(self,position=(34,8,0), pitch=0, yaw=180)]
-        self.cameraNumber = 0
+        cameralist = Cameras.inst(self)
+        Cameras.inst().newCamera('Camera_1')
+        Cameras.inst()['Camera_1'].setPosition((34,8,0))
+        Cameras.inst()['Camera_1'].setPitch(0)
+        Cameras.inst()['Camera_1'].setYaw(180)
+        
+#        self.camera = [Camera(self,position=(5,5,40),pitch=-5,yaw=-90),Camera(self,position=(34,8,0), pitch=0, yaw=180)]
+#        self.cameraNumber = 0
 
         self.t0 = tm.time()
         self.t1 = tm.time()
@@ -200,8 +206,10 @@ class OglFrame(QOpenGLWidget):
 
         self.timer.start(5)
         
+        self.parentWin.api.defaultAxes()
+        self.parentWin.api.defaultGrille()
         
-        self.StartUpLoading()
+#        self.StartUpLoading()
     
 
     def StartUpLoading(self):
@@ -260,7 +268,7 @@ class OglFrame(QOpenGLWidget):
 #        self.defModel.setRotation((45,15,30))
 #        self.defModel.setRotation(glm.vec3(45,15,30)) # est aussi correct
 
-        self.defModel.setPosition(glm.vec3(4,2,-2))
+        self.defModel.setPosition(glm.vec3(4,2,-20))
 
 
         self.drawModelList.append(self.defModel)
@@ -307,15 +315,13 @@ class OglFrame(QOpenGLWidget):
 
 #        self.defModel.setWireFrame(True)
         
-        self.parentWin.api.defaultAxes()
-        self.parentWin.api.defaultGrille()
 
     def resizeGL(self, width: int, height: int):
         self.width = width
         self.height = height
 
         glViewport(0, 0, self.width, self.height)
-        for camera in self.camera:
+        for camera in Cameras.inst().values():
             camera.setAspectRatio(self.width, self.height)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
@@ -325,7 +331,11 @@ class OglFrame(QOpenGLWidget):
         self.hudTexture.resize(self.width, self.height)
 
     def paintGL(self):
-        self.camera[self.cameraNumber].update()
+        camera = Cameras.inst().getMainCamera()
+#        print(camera.update())
+        camera.update()
+#        Cameras.inst().getMainCamera().update()
+#        self.camera[self.cameraNumber].update()
 
         glClearColor(0.0, 0.2, 0.2, 0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -334,7 +344,7 @@ class OglFrame(QOpenGLWidget):
 #        self.noiseTexture()
         
         for drawModel in self.drawModelList:
-            drawModel.update(self.camera[self.cameraNumber])
+            drawModel.update(Cameras.inst().getMainCamera())
             drawModel.paintGL()
         if self.hudModel is not None:
             self.hudModel.paintGL()

@@ -190,7 +190,8 @@ class PreferenceDialog(QDialog):
         self.addActionToTreeView1("Line","&Line",self.mainWin.api.selectMode,ToolMode.LINE,8,'','')
         self.addActionToTreeView1("NewModel","&new Model",self.mainWin.api.newModel,None,6,'Create a new Model','New Model')
         self.addActionToTreeView1("ToogleGride","&Toogle Gride",self.mainWin.api.toogle_Grille,None,6,'show or hide Grille','show/hide Grille')
-        self.addActionToTreeView1("showModelExplorer","&Model Explorer",self.mainWin.api.showModelList,None,-1,'','')
+        self.addActionToTreeView1("showModelExplorer","&Model Explorer",self.mainWin.api.toogleModelList,None,-1,'','')
+        self.addActionToTreeView1("showCameraSettings","&Camera Settings",self.mainWin.api.toogleCameraList,None,-1,'','')
         self.treeview1.expandAll()
         
  
@@ -451,6 +452,7 @@ class MenuManager:
         editMenu.addAction(self.getAction('Paste'))
         editMenu.addAction(self.getAction('ToogleGride'))
         editMenu.addAction(self.getAction('showModelExplorer'))
+        editMenu.addAction(self.getAction('showCameraSettings'))
         # Help menu
         #QIcon(QtGui.QPixmap('pencil.png')),
         helpMenu = menuBar.addMenu("&Help")

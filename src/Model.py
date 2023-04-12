@@ -2,6 +2,7 @@ from OpenGL.GL import *
 from shader_program import ShaderProgram
 from Point3D import *
 from Ray import *
+from sphere import *
 import numpy as np
 import glm
 import sys
@@ -26,7 +27,8 @@ class BaseModel:
         self.maxXDiag = 0.0
         self.maxYDiag = 0.0
         self.maxZDiag = 0.0
-        self.centerInWorld = glm.vec4(0.0,0.0,0.0,1.0)
+        self.centerInWorld = glm.vec3(0.0,0.0,0.0)
+        self.sphereTest = Sphere(1)
         self.minmaxextent = []
         self.pointCloud = []
         self.pointWorld = []
@@ -41,9 +43,15 @@ class BaseModel:
         self.attributes = ShaderProgram.attributes[self.progName]
         self.initAttribLocation()
         if 'm_proj' in self.uniforms and 'm_view' in self.uniforms and 'm_model' in self.uniforms:
+            self.sphereTest.program = self.program
+            self.sphereTest.m_projID = self.uniforms['m_proj']
+            self.sphereTest.m_viewID = self.uniforms['m_view']
+            self.sphereTest.m_modelID = self.uniforms['m_model']
+
             self.isMVP = True
         else:
             self.isMVP = False
+
 
         self.parentModel = kwargs.get('parent',None)
 
@@ -61,6 +69,7 @@ class BaseModel:
         self.modelName = ""
         self.setModelName(kwargs.get('Name',"model_%d" % self.modelID))
 
+
     def baseInit(self):
         self.modelID = BaseModel.nextModelID
         BaseModel.nextModelID += 1
@@ -69,7 +78,7 @@ class BaseModel:
         if name != self.modelName:
             # find self  remove from list
             if self.modelName in BaseModel.newmodelList:
-                my_dict.pop(self.modelName, None)
+                BaseModel.newmodelList.pop(self.modelName, None)
             if name in BaseModel.newmodelList:
                 # new name already in list so add model id
                 self.modelName = "%s(%d)" % (name,self.modelID)
@@ -128,6 +137,7 @@ class BaseModel:
     @classmethod
     def getSelectedModel(self):
         return self.selectedModel
+
         
     def initAttribLocation(self):
         if self.program is not None:
@@ -195,10 +205,11 @@ class BaseModel:
             self.centerInWorld.x = self.minmaxextent[0] + (self.maxXDiag / 2)
             self.centerInWorld.y = self.minmaxextent[1] + (self.maxYDiag / 2)
             self.centerInWorld.z = self.minmaxextent[2] + (self.maxZDiag / 2)
-            self.centerInWorld = newMatrix*self.centerInWorld
+            self.centerInWorld = newMatrix*glm.vec4(self.centerInWorld.x,self.centerInWorld.y,self.centerInWorld.z,1.0)
+            self.centerInWorld = glm.vec3(self.centerInWorld)
 
     def HitTest(self,ray,triangleTest = False):
-        self.isOnModel, self.hitDistance = ray.intersectionSphere(self.centerInWorld,self.maxDiag)
+        self.isOnModel, self.hitDistance = ray.intersectionSphere(self.centerInWorld,self.maxDiag/2)
         return self.isOnModel, self.hitDistance, False , False
 
     def setPosition(self,pos):
@@ -306,7 +317,7 @@ class ModelDef2(BaseModel):
     #       Triangles    3x   0,1,2 0,2,3 ...  0,1,2 1,2,3(2,1,3) ...   3 Vertex x Triangle
 
     def HitTest(self,ray,triangleTest = False):
-        self.isOnModel, self.hitDistance = ray.intersectionSphere(self.centerInWorld,self.maxDiag)
+        self.isOnModel, self.hitDistance = ray.intersectionSphere(self.centerInWorld,self.maxDiag/2)
         self.isOnATriangle = False
         isOnVertex = False
         if triangleTest and self.isOnModel:
@@ -340,6 +351,14 @@ class ModelDef2(BaseModel):
         
         for render in self.renders:
             self._paintGL(render)
+
+        self.sphereTest.m_proj = self.m_proj
+        self.sphereTest.m_view = self.m_view
+        self.sphereTest.m_model = glm.translate(self.m_model, self.centerInWorld)
+        self.sphereTest.m_model = glm.scale(self.sphereTest.m_model, glm.vec3(self.maxDiag/2,self.maxDiag/2,self.maxDiag/2))
+        
+#        self.sphereTest.m_model = self.m_model
+        self.sphereTest.paintGL()
 
     def _paintGL(self,render):
         if self.drawRender:
@@ -621,7 +640,7 @@ class ModelDefault(BaseModel):
         print(self.triangles)
     
     def HitTest(self,ray,triangleTest = False):
-        self.isOnModel, self.hitDistance = ray.intersectionSphere(self.centerInWorld,self.maxDiag)
+        self.isOnModel, self.hitDistance = ray.intersectionSphere(self.centerInWorld,self.maxDiag/2)
         self.isOnATriangle = False
         self.isOnVertex = False
         if triangleTest and self.isOnModel:
@@ -639,6 +658,14 @@ class ModelDefault(BaseModel):
                     self._paintGLSegments()
                 if self.drawTrangles:
                     self._paintGLTriangles()
+        if not self.internal:
+            self.sphereTest.m_proj = self.m_proj
+            self.sphereTest.m_view = self.m_view
+            self.sphereTest.m_model = glm.translate(self.m_model, self.centerInWorld)
+            self.sphereTest.m_model = glm.scale(self.sphereTest.m_model, glm.vec3(self.maxDiag/2,self.maxDiag/2,self.maxDiag/2))
+
+#            self.sphereTest.m_model = self.m_model
+            self.sphereTest.paintGL()
                     
     def _paintGLPoints(self):
         ShaderProgram.inst().UseProgram(self.program)

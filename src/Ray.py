@@ -11,8 +11,44 @@ class Ray():
 
     def pointFromRay(self):
         return self.startPoint + (self.rayDirection * self.t)
-        
+
     def intersectionSphere(self,SphereOrigine,SphereRayon):
+        intersection_distance = 0
+        dist_to_sphere = self.startPoint - SphereOrigine
+        b = glm.dot(self.rayDirection, dist_to_sphere)
+        c = glm.dot(dist_to_sphere, dist_to_sphere) - SphereRayon * SphereRayon
+        b_squared_minus_c = b * b - c
+
+        # check for "imaginary" answer. == ray completely misses sphere
+        if b_squared_minus_c < 0.0:
+            return False,0
+        # check for ray hitting twice (in and out of the sphere)
+        if b_squared_minus_c > 0.0:
+            # get the 2 intersection distances along ray
+            t_a = -b + math.sqrt(b_squared_minus_c)
+            t_b = -b - math.sqrt(b_squared_minus_c)
+            intersection_distance = t_b
+            # if behind viewer, throw one or both away
+            if t_a < 0.0:
+                if t_b < 0.0:
+                    return False,0
+            else:
+                if t_b < 0.0:
+                    intersection_distance = t_a
+            return True,intersection_distance
+        # check for ray hitting once (skimming the surface)
+        if 0.0 == b_squared_minus_c:
+            # if behind viewer, throw away
+            t = -b + math.sqrt(b_squared_minus_c)
+            if t < 0.0:
+                return False,0
+            intersection_distance = t
+            return True,intersection_distance
+        # note: could also check if ray origin is inside sphere radius
+        return False,0
+
+    def intersectionSphere2(self,SphereOrigine,SphereRayon):
+
         # dot of ray direction
         a = (self.rayDirection.x * self.rayDirection.x) + (self.rayDirection.y * self.rayDirection.y) + (self.rayDirection.z * self.rayDirection.z)
 

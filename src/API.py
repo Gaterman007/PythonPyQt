@@ -10,7 +10,9 @@ from Icons import Icons
 from Model import ModelDefault
 from Point3D import Point3D,Segment,Triangle
 from Camera import Plane
+from Camera import Cameras
 from ModelExplorer import ModelExplorer
+from CameraPane import CameraPane
 from Tools import *
 
 import numpy as np
@@ -27,6 +29,7 @@ class API:
         self.grilleModel = None
         self.axesModel = [None,None,None]
         self.modelListDisp = None
+        self.cameraListDisp = None
 
 
     def setSelectedModel(self,model):
@@ -145,7 +148,7 @@ class API:
     def preferenceDialog(self,actionData):
         self.mainWin.menuManager.prefwin.show()
 
-    def showModelList(self,show):
+    def toogleModelList(self,show):
         if self.modelListDisp is None:
             self.modelListDisp = ModelExplorer('Model List',self.mainWin)
             self.mainWin.addDockWidget(Qt.LeftDockWidgetArea,self.modelListDisp)
@@ -156,17 +159,27 @@ class API:
             else:
                 self.modelListDisp.show()
 
+    def toogleCameraList(self,show):
+        if self.cameraListDisp is None:
+            self.cameraListDisp = CameraPane('Camera Settings',self.mainWin)
+            self.mainWin.addDockWidget(Qt.LeftDockWidgetArea,self.cameraListDisp)
+            self.cameraListDisp.show()
+        else:
+            if self.cameraListDisp.isVisible():
+                self.cameraListDisp.hide()
+            else:
+                self.cameraListDisp.show()
 
 
     def aboutDialog(self,actionData):
         self.mainWin.statusBar.showMessage("Help > About...", 3000)
         # Logic for showing an about dialog content goes here...
 
-    def getCamera(self,cameraNo = -1):
-        if cameraNo == -1:
-            return self.mainWin.oglFrame.camera[self.mainWin.oglFrame.cameraNumber]
+    def getCamera(self,cameraName = ''):
+        if cameraName == '':
+            return Cameras.inst().getMainCamera()
         else:
-            return self.mainWin.oglFrame.camera[cameraNo]
+            return Cameras.inst()[cameraName]
 
     def newModel(self,actionData):
         self.mainWin.oglFrame.makeCurrent()
@@ -208,6 +221,9 @@ class API:
             self.mainWin.oglFrame.makeCurrent()
             selectedModel.addPoint3D(Point3D(vecteur.x,vecteur.y,vecteur.z))
             self.mainWin.oglFrame.doneCurrent()
+
+    def getSelectedModel(self):
+        return BaseModel.getSelectedModel()
 
     def toogle_Grille(self,value):
         self.grilleModel.visible = not self.grilleModel.visible
