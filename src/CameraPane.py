@@ -14,8 +14,15 @@ class CameraPane(QDockWidget):
         self.listWidget = QListWidget()
         self.addItem('No Camera')
         self.setWidget(self.listWidget)
-        self.loadCameras()
+        self.listWidget.itemClicked.connect(self.Clicked)
 
+        self.loadCameras()
+        
+    def Clicked(self,item):
+        Cameras.inst().setCamera(item.text())
+#        if item.text() in BaseModel.newmodelList:
+#            BaseModel.setSelectedModel(BaseModel.newmodelList[item.text()])
+            
     def addItem(self,itemDesc):
         self.listWidget.addItem(itemDesc)
         
