@@ -29,5 +29,7 @@ class CameraPane(QDockWidget):
     def loadCameras(self):
         self.listWidget.clear()
         cameras = Cameras.inst()
+        if len(cameras) <= 0:
+            self.addItem('No Camera')
         for cameraName in cameras:
             self.addItem(cameraName)
